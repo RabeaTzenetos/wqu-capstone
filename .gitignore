@@ -1,0 +1,72 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Personal working notes
+PROJECT_LOG.md
+
+# Test files
+tests/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+
+# Data files
+data_raw/
+data_processed/
+
+# Results
+results/tables/*.csv
+results/convergence/*.json
+results/search_logs/*.json
+results/figures/*.png
+
+# Keep results directory structure
+!results/tables/.gitkeep
+!results/convergence/.gitkeep
+!results/search_logs/.gitkeep
+!results/figures/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary files
+*.tmp
+*.log
+
+# Archive
+archive/

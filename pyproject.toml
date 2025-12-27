@@ -1,0 +1,34 @@
+[project]
+name = "wqu-capstone"
+version = "0.1.0"
+description = "WQU Capstone Project: How can heuristic optimisation methods be used to determine optimal strike, floor, and cap levels in a collared PPA?"
+authors = [
+    {name = "Rabea Tzenetos"}
+]
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "numpy (>=1.21,<2.0)",
+    "pandas (>=1.3,<3.0)",
+    "scipy (>=1.11,<2.0)",
+    "matplotlib (>=3.8,<4.0)",
+    "seaborn (>=0.11)",
+    "ipython (>=7.0,<9.0)",
+    "tqdm (>=4.0)",
+    "plotly (>=6.5.0,<7.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.isort]
+skip = ["tests"]
+skip_gitignore = false
+
+[tool.ruff]
+exclude = ["tests"]
+
+[tool.black]
+extend-exclude = "tests"
