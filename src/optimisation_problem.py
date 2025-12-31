@@ -339,15 +339,20 @@ def objective_function(
     """
     Objective function for heuristic optimisation algorithms.
     
-    Maximises: E[R_PPA] - λ·CVaR_q%(R_PPA)
+    Maximises: E[R_PPA] - λ·(E[R_PPA] - CVaR_q%(R_PPA))
+             = (1-λ)·E[R_PPA] + λ·CVaR_q%(R_PPA)
     Subject to: Structural constraints + net_transfer/baseline ≤ β
     
     **With aggregation_freq='ME' (default):**
     - E[R_PPA] = Average monthly revenue (EUR per month)
     - CVaR = Average revenue in worst 5% of months (EUR per month)
-    - Objective optimises monthly performance, not total contract value
-    - Example: Mean=302k, CVaR=36k means "average month brings 302k EUR, 
-      worst months only 36k EUR"
+    - Shortfall = E[R_PPA] - CVaR = Tail risk measure (how much worse bad months are)
+    - λ weights the trade-off: higher λ → more focus on worst-case outcomes
+    
+    **Example:** Mean=302k, CVaR=36k, Shortfall=266k
+    - λ=0: Fitness = 302k (only average matters)
+    - λ=0.5: Fitness = 169k (balanced: 151k + 18k)
+    - λ=1: Fitness = 36k (only worst case matters)
     
     Constraint handling: Hybrid penalty method
     - Structural violations → large penalty (effectively reject)
@@ -361,8 +366,9 @@ def objective_function(
         generation: Historical generation (MWh)
         bounds: Parameter bounds from calculate_quantile_bounds()
         lambda_param: Risk aversion parameter (default 0.5)
-                     Low λ: Value-seeking (aggressive from the generator perspective)
-                     High λ: Risk-averse (conservative from the generator perspective)
+                     λ=0: Risk-neutral (maximise mean only)
+                     λ=1: Maximum risk aversion (minimise worst-case)
+                     Higher λ → more conservative, focus on tail protection
         beta: Fairness constraint threshold (default 0.05 = 5%)
              Fixed parameter for sensitivity analysis
         confidence_level: For CVaR calculation (default 0.95)
@@ -430,8 +436,11 @@ def objective_function(
         beta=beta
     )
     
-    # 5. Base objective: max E[R] - λ·CVaR
-    base_objective = metrics['mean_revenue'] - lambda_param * abs(metrics['cvar'])
+    # 5. Base objective: max E[R] - λ·(E[R] - CVaR)
+    #    Equivalently: (1-λ)·E[R] + λ·CVaR
+    #    Shortfall measures tail risk: how much worse are bad months vs average
+    shortfall = metrics['mean_revenue'] - metrics['cvar']
+    base_objective = metrics['mean_revenue'] - lambda_param * shortfall
     
     # 6. Calculate penalty for fairness violations
     fair_viol = {'net_transfer': fair_violation}

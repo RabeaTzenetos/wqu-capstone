@@ -47,7 +47,16 @@ Three complementary scipy-based heuristic algorithms:
 Risk-aware optimisation with bilateral constraints:
 
 ```
-Maximise: 𝔼[R_PPA] - λ·CVaR_q%(R_PPA)
+Maximise: 𝔼[R_PPA] - λ·(𝔼[R_PPA] - CVaR_q%(R_PPA))
+        = (1-λ)·𝔼[R_PPA] + λ·CVaR_q%(R_PPA)
+
+Where:
+  - 𝔼[R_PPA] = Mean aggregated revenue (e.g., monthly average)
+  - CVaR = Expected revenue in worst q% of periods (e.g., worst 5% of months)
+  - λ ∈ [0,1] = Risk aversion parameter
+    • λ=0: Risk-neutral (maximise mean)
+    • λ=1: Maximum risk aversion (maximise worst-case)
+  - Shortfall = 𝔼[R_PPA] - CVaR = Tail risk measure
 
 Subject to:
   1. F ≤ K ≤ C (structural ordering constraint)
@@ -289,7 +298,10 @@ def objective_function(
     beta: float = 0.05
 ) -> float:
     """
-    Objective: Maximise mean_revenue - lambda * |CVaR|
+    Objective: Maximise mean_revenue - lambda * (mean_revenue - CVaR)
+             = (1-lambda) * mean_revenue + lambda * CVaR
+    
+    This balances mean returns vs worst-case tail outcomes.
     
     Modify this function to:
     - Change risk metric (e.g., use VaR instead of CVaR)

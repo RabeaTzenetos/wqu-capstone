@@ -370,7 +370,9 @@ def evaluate_by_year(
             'num_hours': len(prices_year)
         }
     
-    base_objective = metrics['mean_revenue'] - lambda_param * abs(metrics['cvar'])
+    # Formula: max E[R] - λ·(E[R] - CVaR) = (1-λ)·E[R] + λ·CVaR
+    shortfall = metrics['mean_revenue'] - metrics['cvar']
+    base_objective = metrics['mean_revenue'] - lambda_param * shortfall
     fitness = base_objective - penalty
     
     # Net transfer percentage

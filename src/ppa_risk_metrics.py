@@ -195,8 +195,10 @@ def evaluate_for_optimisation(
     Example:
         metrics = evaluate_for_optimisation(prices, gen, 40, 60, 80, lambda_param=0.5)
         
-        # In GA/DE/PSO objective function:
-        objective = metrics['mean_revenue'] - lambda_param * metrics['cvar']
+        # In objective function:
+        shortfall = metrics['mean_revenue'] - metrics['cvar']
+        objective = metrics['mean_revenue'] - lambda_param * shortfall
+        # Equivalent to: objective = (1 - lambda_param) * metrics['mean_revenue'] + lambda_param * metrics['cvar']
         
         # In constraint checking:
         if metrics['net_transfer'] > beta * metrics['market_baseline']:
