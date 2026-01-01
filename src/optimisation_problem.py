@@ -398,7 +398,7 @@ def objective_function(
         floor, strike, cap, bounds
     )
     
-    # 2. If structural constraints fail, return penalized fitness immediately
+    # 2. If structural constraints fail, return penalised fitness immediately
     #    (cannot evaluate metrics with invalid structure)
     if not struct_feasible:
         penalty = calculate_penalty(
