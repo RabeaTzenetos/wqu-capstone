@@ -80,16 +80,17 @@ def validate_structural_constraints(
     strike: float,
     cap: float,
     bounds: Dict[str, Tuple[float, float]],
-    min_spread: Optional[float] = None
+    min_spread: Optional[float] = None,
+    check_quantile_bounds: bool = True
 ) -> Tuple[bool, Dict[str, float]]:
     """
     Validate structural constraints for collared PPA parameters.
     
     Checks:
-    1. F ≤ K ≤ C (ordering constraint)
-    2. F_min ≤ F ≤ F_max (floor bounds)
-    3. K_min ≤ K ≤ K_max (strike bounds)
-    4. C_min ≤ C ≤ C_max (cap bounds)
+    1. F ≤ K ≤ C (ordering constraint) - ALWAYS enforced
+    2. F_min ≤ F ≤ F_max (floor bounds) - Optional based on check_quantile_bounds
+    3. K_min ≤ K ≤ K_max (strike bounds) - Optional based on check_quantile_bounds
+    4. C_min ≤ C ≤ C_max (cap bounds) - Optional based on check_quantile_bounds
     5. C - F ≥ min_spread (optional minimum collar width)
     
     Args:
@@ -100,6 +101,10 @@ def validate_structural_constraints(
         min_spread: Optional minimum spread between cap and floor (EUR/MWh)
                    Note: Not currently used but available for future implementation.
                    If implemented, this would be another constraint subject to penalty.
+        check_quantile_bounds: If True, enforce quantile bounds (for optimisation).
+                               If False, only check F ≤ K ≤ C ordering (for stress testing).
+                               Rationale: Contract signed in 2021 with F=39 EUR doesn't become
+                               invalid because 2022 has different price quantiles.
     
     Returns:
         Tuple of (is_feasible, violations_dict)
@@ -107,29 +112,42 @@ def validate_structural_constraints(
         - violations_dict: Magnitude of each violation (0 if satisfied)
     
     Example:
+        # During optimisation: enforce all bounds
         feasible, violations = validate_structural_constraints(
-            floor=40, strike=60, cap=80, bounds=bounds
+            floor=40, strike=60, cap=80, bounds=bounds, check_quantile_bounds=True
         )
-        if not feasible:
-            print(f"Violations: {violations}")
+        
+        # During stress testing: only check ordering
+        feasible, violations = validate_structural_constraints(
+            floor=40, strike=60, cap=80, bounds=bounds, check_quantile_bounds=False
+        )
     """
     violations = {}
     
-    # 1. Ordering constraint: F ≤ K ≤ C
+    # 1. Ordering constraint: F ≤ K ≤ C (ALWAYS enforced)
     violations['floor_strike'] = max(0, floor - strike)
     violations['strike_cap'] = max(0, strike - cap)
     
-    # 2. Bounds constraints
-    floor_min, floor_max = bounds['floor']
-    strike_min, strike_max = bounds['strike']
-    cap_min, cap_max = bounds['cap']
-    
-    violations['floor_lower'] = max(0, floor_min - floor)
-    violations['floor_upper'] = max(0, floor - floor_max)
-    violations['strike_lower'] = max(0, strike_min - strike)
-    violations['strike_upper'] = max(0, strike - strike_max)
-    violations['cap_lower'] = max(0, cap_min - cap)
-    violations['cap_upper'] = max(0, cap - cap_max)
+    # 2. Bounds constraints (only if check_quantile_bounds=True)
+    if check_quantile_bounds:
+        floor_min, floor_max = bounds['floor']
+        strike_min, strike_max = bounds['strike']
+        cap_min, cap_max = bounds['cap']
+        
+        violations['floor_lower'] = max(0, floor_min - floor)
+        violations['floor_upper'] = max(0, floor - floor_max)
+        violations['strike_lower'] = max(0, strike_min - strike)
+        violations['strike_upper'] = max(0, strike - strike_max)
+        violations['cap_lower'] = max(0, cap_min - cap)
+        violations['cap_upper'] = max(0, cap - cap_max)
+    else:
+        # Stress testing mode: don't penalise quantile violations
+        violations['floor_lower'] = 0
+        violations['floor_upper'] = 0
+        violations['strike_lower'] = 0
+        violations['strike_upper'] = 0
+        violations['cap_lower'] = 0
+        violations['cap_upper'] = 0
     
     # 3. Minimum spread (optional, for future implementation)
     # if min_spread is not None:
@@ -202,7 +220,8 @@ def validate_all_constraints(
     bounds: Dict[str, Tuple[float, float]],
     beta: float = 0.05,
     confidence_level: float = 0.95,
-    aggregation_freq: str = 'YE'
+    aggregation_freq: str = 'YE',
+    check_quantile_bounds: bool = True
 ) -> Tuple[bool, Dict[str, float], Dict[str, float]]:
     """
     Comprehensive constraint validation: structural + fairness.
@@ -219,20 +238,29 @@ def validate_all_constraints(
         beta: Fairness constraint threshold (default 0.05)
         confidence_level: For CVaR calculation (default 0.95)
         aggregation_freq: For revenue aggregation (default 'YE')
+        check_quantile_bounds: If False, only enforce F ≤ K ≤ C (for stress testing)
     
     Returns:
         Tuple of (is_fully_feasible, structural_violations, fairness_violation_dict)
         
     Example:
+        # During optimisation: check all constraints
         feasible, struct_viol, fair_viol = validate_all_constraints(
             floor=40, strike=60, cap=80,
             prices=prices, generation=gen,
-            bounds=bounds, beta=0.05
+            bounds=bounds, beta=0.05, check_quantile_bounds=True
+        )
+        
+        # During stress testing: only check ordering
+        feasible, struct_viol, fair_viol = validate_all_constraints(
+            floor=40, strike=60, cap=80,
+            prices=prices, generation=gen,
+            bounds=bounds, beta=0.05, check_quantile_bounds=False
         )
     """
     # 1. Structural constraints (check first, fast fail)
     struct_feasible, struct_violations = validate_structural_constraints(
-        floor, strike, cap, bounds
+        floor, strike, cap, bounds, check_quantile_bounds=check_quantile_bounds
     )
     
     # 2. If structural constraints fail, skip fairness evaluation

@@ -271,12 +271,6 @@ wqu-capstone/
 - Constraint behaviour under 700 EUR/MWh spikes
 - Worst-case performance quantification
 
-**Part 4: Synthesis & Recommendations**
-- Overall algorithm ranking
-- Practical parameter guidance
-- Implementation recommendations
-- Limitations and future work
-
 ### Analysis Results
 
 All analyses available in `notebooks/04_ES_result_evaluation.ipynb` with:
@@ -347,6 +341,10 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
+## Acknowledgments
+
+Large portions of this codebase and documentation were generated and refactored using GitHub Copilot. All Copilot implementations were validated, tested, and refined by the author. The research design, theoretical framework, analysis, and interpretation remain entirely the work of the author.
+
 ## Citation
 
 If you use this framework in your research, please cite:
@@ -354,5 +352,3 @@ If you use this framework in your research, please cite:
 Tzenetos, R. (2026). How can heuristic optimisation methods be used to determine 
 optimal strike, floor, and cap levels in a collared PPA? MScFE Capstone Project, 
 WorldQuant University.
-
-

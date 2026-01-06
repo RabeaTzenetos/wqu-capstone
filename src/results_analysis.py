@@ -270,6 +270,7 @@ def evaluate_by_year(
     prices: pd.Series,
     generation: pd.Series,
     year: int,
+    bounds: Optional[Dict[str, Tuple[float, float]]] = None,
     lambda_param: float = 0.1,
     beta: float = 0.05,
     confidence_level: float = 0.95,
@@ -279,12 +280,16 @@ def evaluate_by_year(
     Evaluate fixed PPA parameters on a specific year's data.
     
     Useful for year-level stress analysis (e.g., 2022 Ukraine crisis).
+    Uses training period bounds for consistent evaluation (contract designed
+    in 2021 evaluated on 2022-2025 with original design constraints).
     
     Args:
         floor, strike, cap: PPA parameters to evaluate
         prices: Full price series
         generation: Full generation series
         year: Year to filter (e.g., 2022)
+        bounds: Parameter bounds from training period (if None, calculates from year data)
+                Recommended: Pass training period bounds for consistent stress testing
         lambda_param: Risk aversion parameter
         beta: Fairness constraint threshold
         confidence_level: CVaR confidence level
@@ -294,10 +299,12 @@ def evaluate_by_year(
         Dictionary with fitness, metrics, and constraint info for that year
         
     Example:
-        >>> # Evaluate train params on 2022
+        >>> # Evaluate train params on 2022 with training period bounds
+        >>> train_bounds = calculate_quantile_bounds(prices_train)
         >>> result_2022 = evaluate_by_year(
         ...     floor=39.10, strike=60.36, cap=172.43,
-        ...     prices=prices, generation=gen, year=2022
+        ...     prices=prices, generation=gen, year=2022,
+        ...     bounds=train_bounds
         ... )
         >>> print(f"2022 fitness: {result_2022['fitness']:.0f}")
     """
@@ -309,10 +316,14 @@ def evaluate_by_year(
     if len(prices_year) == 0:
         raise ValueError(f"No data found for year {year}")
     
-    # Calculate bounds (from full or year data?)
-    bounds = calculate_quantile_bounds(prices_year)
+    # Use provided bounds (training period) or calculate from year data
+    if bounds is None:
+        bounds = calculate_quantile_bounds(prices_year)
     
     # Validate constraints
+    # Note: For stress testing with training parameters, we skip quantile bound penalties
+    # Only F ≤ K ≤ C ordering is enforced - parameters from 2021 contract shouldn't be
+    # penalised for being outside 2022's drastically different price quantiles
     is_feasible, struct_viol, fair_viol = validate_all_constraints(
         floor=floor,
         strike=strike,
@@ -322,7 +333,8 @@ def evaluate_by_year(
         bounds=bounds,
         beta=beta,
         confidence_level=confidence_level,
-        aggregation_freq=aggregation_freq
+        aggregation_freq=aggregation_freq,
+        check_quantile_bounds=False  # Stress testing: only check F ≤ K ≤ C
     )
     
     # Calculate penalty (handle None case and NaN values)
@@ -417,6 +429,8 @@ def stress_test_by_years(
     
     Creates a comprehensive stress test analysis showing year-by-year
     performance for each algorithm's train-optimised parameters.
+    Uses training period bounds (2015-2021) for consistent evaluation:
+    "If we signed this contract in 2021, how did it perform 2022-2025?"
     
     Args:
         train_results: Dictionary with train results (from load_optimisation_results)
@@ -440,6 +454,12 @@ def stress_test_by_years(
         >>> # Identify worst year for each algorithm
         >>> worst = stress_df.groupby('algorithm')['fitness'].idxmin()
     """
+    # Calculate training period bounds once (2015-2021)
+    # Used for consistent constraint evaluation across all years
+    train_mask = (prices.index.year >= 2015) & (prices.index.year <= 2021)
+    prices_train = prices[train_mask]
+    train_bounds = calculate_quantile_bounds(prices_train)
+    
     rows = []
     
     for algo in algorithms:
@@ -455,7 +475,7 @@ def stress_test_by_years(
         strike = train_row['strike']
         cap = train_row['cap']
         
-        # Evaluate on each year
+        # Evaluate on each year with training period bounds
         for year in years:
             try:
                 result = evaluate_by_year(
@@ -465,6 +485,7 @@ def stress_test_by_years(
                     prices=prices,
                     generation=generation,
                     year=year,
+                    bounds=train_bounds,  # Use training period bounds
                     **eval_kwargs
                 )
                 result['algorithm'] = algo
