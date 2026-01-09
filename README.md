@@ -10,8 +10,8 @@ A comprehensive framework for pricing collared Power Purchase Agreement (PPA) st
 
 Collared PPAs are bilateral risk-sharing contracts between renewable energy generators and off-takers. This framework:
 
-- **Implements** realistic collared PPA valuation with multiple structure types (Fixed, Indexed, Collared)
-- **Optimises** PPA parameters using three heuristic algorithms from scipy
+- **Implements** realistic PPA valuation with implementation focus on collared PPAs
+- **Optimises** PPA pricing parameters using three heuristic algorithms from scipy and realistic constraints
 - **Evaluates** risk-adjusted returns using CVaR-based objective functions
 - **Assesses** solution robustness using train/test splits and year-level market scenario analysis
 - **Ensures** bilateral fairness through constraint enforcement
