@@ -13,7 +13,7 @@ Collared PPAs are bilateral risk-sharing contracts between renewable energy gene
 - **Implements** realistic collared PPA valuation with multiple structure types (Fixed, Indexed, Collared)
 - **Optimises** PPA parameters using three heuristic algorithms from scipy
 - **Evaluates** risk-adjusted returns using CVaR-based objective functions
-- **Validates** solutions through train/test splits and year-level stress testing
+- **Assesses** solution robustness using train/test splits and year-level market scenario analysis
 - **Ensures** bilateral fairness through constraint enforcement
 
 ### Collared PPA Structure
@@ -86,8 +86,8 @@ Subject to:
 **Data Splits:**
 - **Full Period:** 2015-2025 (132 months) - algorithm comparison
 - **Train:** 2015-2021 (84 months) - parameter optimisation
-- **Test:** 2023-2025 (36 months) - out-of-sample validation
-- **Stress:** 2022 + individual years - extreme scenario testing
+- **Test:** 2023-2025 (36 months) - out-of-sample evaluation
+- **Scenario:** 2022-2025 as individual years - market scenario analysis
 
 ### Obtaining Data from ENTSO-E
 
@@ -259,24 +259,25 @@ wqu-capstone/
 - Solution quality and parameter values
 - Computational cost analysis
 
-**Part 2: Generalisation Testing (Train/Test)**
+**Part 2: Train/Test Sensitivity Analysis**
 - In-sample vs out-of-sample performance
-- Performance degradation metrics
+- Sensitivity of objective values across periods
 - Constraint satisfaction robustness
 - Algorithm comparison under distribution shift
 
-**Part 3: Year-Level Stress Analysis**
+**Part 3: Year-Level Market Scenario Analysis**
 - Individual year performance (2022-2025)
-- Extreme scenario testing (Russian invasion of Ukraine 2022)
-- Constraint behaviour under 700 EUR/MWh spikes
-- Worst-case performance quantification
+- Extreme high price scenario testing (Russian invasion of Ukraine 2022)
+- Wider price distribution and negative Spot price scenario testing (2024-2025)
+- Collar activation distribution of algorithms across years
+
 
 ### Analysis Results
 
 All analyses available in `notebooks/04_ES_result_evaluation.ipynb` with:
 - Convergence plots (3-algorithm comparison)
-- Degradation analysis (train → test)
-- Stress test results (year-by-year breakdown)
+- Train → test sensitivity analysis
+- Market scenario analysis (year-by-year breakdown)
 
 ## Customisation
 
