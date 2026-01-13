@@ -10,10 +10,10 @@ A comprehensive framework for pricing collared Power Purchase Agreement (PPA) st
 
 Collared PPAs are bilateral risk-sharing contracts between renewable energy generators and off-takers. This framework:
 
-- **Implements** realistic PPA valuation with implementation focus on collared PPAs
+- **Implements** realistic PPA valuation with implementation focus on fixed-strike collared PPAs
 - **Optimises** PPA pricing parameters using three heuristic algorithms from scipy and realistic constraints
 - **Evaluates** risk-adjusted returns using CVaR-based objective functions
-- **Assesses** solution robustness using train/test splits and year-level market scenario analysis
+- **Assesses** framework robustness using train-test evaluation and year-level market scenario analysis
 - **Ensures** bilateral fairness through constraint enforcement
 
 ### Collared PPA Structure
@@ -80,7 +80,7 @@ Subject to:
 **Market:** Spanish MIBEL (day-ahead spot prices)  
 **Period:** 2015-2025 (11 years, 96,170 hours)  
 **Source:** ENTSO-E Transparency Platform  
-**Technology Focus:** Solar (Wind Onshore can also be processed and evaluated)
+**Technology Focus:** Solar (data pipeline also supports Spanish Wind Onshore)
 **Granularity:** Hourly & 15-min
 
 **Data Splits:**
@@ -225,7 +225,7 @@ poetry run jupyter notebook
 **Available Notebooks:**
 - `01_ES_data_exploration.ipynb` - Market and generation profile analysis
 - `02_ES_ppa_modelling.ipynb` - PPA structure demonstration and sensitivity
-- `04_ES_result_evaluation.ipynb` - Comprehensive algorithm evaluation (4 parts)
+- `03_ES_result_evaluation.ipynb` - Comprehensive algorithm evaluation (3 parts)
 
 ## Project Structure
 
@@ -274,7 +274,7 @@ wqu-capstone/
 
 ### Analysis Results
 
-All analyses available in `notebooks/04_ES_result_evaluation.ipynb` with:
+All analyses available in `notebooks/03_ES_result_evaluation.ipynb` with:
 - Convergence plots (3-algorithm comparison)
 - Train → test sensitivity analysis
 - Market scenario analysis (year-by-year breakdown)
